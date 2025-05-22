@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaxiApp - Book a Ride</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>TaxiApp</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}" class="active">Home</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('book_ride') }}">Book a Ride</a></li>
+                        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}">Login</a></li>
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="map-container">
+                <div id="map"></div>
+                
+                <div class="location-panel">
+                    <div class="input-group">
+                        <span class="material-icons">my_location</span>
+                        <input type="text" id="pickup-location" placeholder="Pickup location" readonly>
+                    </div>
+                    <div class="input-group">
+                        <span class="material-icons">place</span>
+                        <input type="text" id="destination-input" placeholder="Where to?">
+                    </div>
+                </div>
+                
+                <div id="booking-panel" class="booking-panel hidden">
+                    <h3>Trip Details</h3>
+                    <div class="trip-info">
+                        <p>Distance: <span id="trip-distance">0 km</span></p>
+                        <p>Duration: <span id="trip-duration">0 min</span></p>
+                        <p>Fare: <span id="trip-fare">$0.00</span></p>
+                    </div>
+                    <div class="car-options">
+                        <div class="car-option selected">
+                            <span class="material-icons">directions_car</span>
+                            <p>Standard</p>
+                        </div>
+                        <div class="car-option">
+                            <span class="material-icons">local_taxi</span>
+                            <p>Premium</p>
+                        </div>
+                        <div class="car-option">
+                            <span class="material-icons">airport_shuttle</span>
+                            <p>XL</p>
+                        </div>
+                    </div>
+                    
+                    {% if current_user.is_authenticated %}
+                        <button onclick="bookRide()" class="btn-primary">Book Now</button>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn-primary" style="display: block; text-align: center; text-decoration: none;">Login to Book</a>
+                    {% endif %}
+                    
+                    <!-- Hidden form fields for coordinates -->
+                    <input type="hidden" id="pickup-lat" name="pickup_lat">
+                    <input type="hidden" id="pickup-lng" name="pickup_lng">
+                    <input type="hidden" id="destination-lat" name="destination_lat">
+                    <input type="hidden" id="destination-lng" name="destination_lng">
+                </div>
+                
+                <div id="confirmation-panel" class="confirmation-panel hidden">
+                    <h3>Ride Confirmed!</h3>
+                    <div class="driver-info">
+                        <div class="driver-avatar">
+                            <span class="material-icons">person</span>
+                        </div>
+                        <div class="driver-details">
+                            <h4>Your driver is on the way</h4>
+                            <p id="driver-status">ETA: <span id="driver-eta">2 min</span></p>
+                        </div>
+                    </div>
+                    <button class="btn-danger">Cancel Ride</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 TaxiApp. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Add Google Maps JavaScript API with Places library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places,geometry" async defer></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+</body>
+</html> 

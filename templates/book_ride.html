@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Ride - TaxiApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .booking-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .booking-form {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .map-container {
+            height: 500px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .fare-estimate {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .fare-estimate h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .fare-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0066CC;
+        }
+        
+        .btn-primary {
+            background-color: #0066CC;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0055aa;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background-color: #e6ffe6;
+            color: #008800;
+        }
+        
+        .alert-danger {
+            background-color: #ffe6e6;
+            color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>TaxiApp</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('book_ride') }}" class="active">Book a Ride</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1>Book a Ride</h1>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <div class="booking-container">
+                <div class="booking-form">
+                    <form method="POST" action="{{ url_for('book_ride') }}">
+                        <div class="form-group">
+                            <label for="pickup-location-input">Pickup Location</label>
+                            <input type="text" id="pickup-location-input" name="pickup_location" placeholder="Enter pickup location" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="destination-location-input">Destination</label>
+                            <input type="text" id="destination-location-input" name="destination" placeholder="Enter destination" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ride-type">Ride Type</label>
+                            <select id="ride-type" name="ride_type">
+                                <option value="standard">Standard</option>
+                                <option value="premium">Premium</option>
+                                <option value="xl">XL</option>
+                            </select>
+                        </div>
+                        
+                        <div class="fare-estimate">
+                            <h3>Estimated Fare</h3>
+                            <div class="fare-amount" id="fare-amount">$0.00</div>
+                        </div>
+                        
+                        <!-- Hidden fields for coordinates and distance -->
+                        <input type="hidden" id="pickup-lat" name="pickup_lat">
+                        <input type="hidden" id="pickup-lng" name="pickup_lng">
+                        <input type="hidden" id="destination-lat" name="destination_lat">
+                        <input type="hidden" id="destination-lng" name="destination_lng">
+                        <input type="hidden" id="distance-input" name="distance" value="0">
+                        <input type="hidden" id="fare-input" name="fare" value="0">
+                        
+                        <button type="submit" class="btn-primary">Book Now</button>
+                    </form>
+                </div>
+                
+                <div class="map-container">
+                    <div id="map" style="height: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 TaxiApp. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Add Google Maps JavaScript API with Places library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places,geometry" async defer></script>
+    <script>
+        let map;
+        let pickupMarker;
+        let destinationMarker;
+        let directionsService;
+        let directionsRenderer;
+        
+        function initMap() {
+            // Initialize map
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 37.7749, lng: -122.4194 }, // Default to San Francisco
+                zoom: 13,
+                mapTypeControl: false,
+                fullscreenControl: false,
+                streetViewControl: false,
+            });
+            
+            // Initialize directions service and renderer
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                suppressMarkers: true,
+            });
+            
+            // Try to get user's current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+                        
+                        // Center map on user location
+                        map.setCenter(userLocation);
+                        
+                        // Add marker for pickup location
+                        pickupMarker = new google.maps.Marker({
+                            position: userLocation,
+                            map: map,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 10,
+                                fillColor: "#4285F4",
+                                fillOpacity: 1,
+                                strokeColor: "#FFFFFF",
+                                strokeWeight: 2,
+                            },
+                            title: "Pickup Location",
+                        });
+                        
+                        // Set pickup coordinates in hidden fields
+                        document.getElementById("pickup-lat").value = userLocation.lat;
+                        document.getElementById("pickup-lng").value = userLocation.lng;
+                        
+                        // Get address for the pickup location
+                        const geocoder = new google.maps.Geocoder();
+                        geocoder.geocode({ location: userLocation }, (results, status) => {
+                            if (status === "OK" && results[0]) {
+                                document.getElementById("pickup-location-input").value = results[0].formatted_address;
+                            }
+                        });
+                    },
+                    () => {
+                        console.log("Error: The Geolocation service failed.");
+                    }
+                );
+            }
+            
+            // Initialize autocomplete for destination input
+            const destinationInput = document.getElementById("destination-location-input");
+            const autocomplete = new google.maps.places.Autocomplete(destinationInput);
+            
+            autocomplete.addListener("place_changed", () => {
+                const place = autocomplete.getPlace();
+                
+                if (!place.geometry || !place.geometry.location) {
+                    console.log("Returned place contains no geometry");
+                    return;
+                }
+                
+                // Add marker for destination
+                if (destinationMarker) {
+                    destinationMarker.setMap(null);
+                }
+                
+                destinationMarker = new google.maps.Marker({
+                    position: place.geometry.location,
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: "#DB4437",
+                        fillOpacity: 1,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 2,
+                    },
+                    title: "Destination",
+                });
+                
+                // Set hidden fields
+                document.getElementById("destination-lat").value = place.geometry.location.lat();
+                document.getElementById("destination-lng").value = place.geometry.location.lng();
+                
+                // Update route if both locations are set
+                if (pickupMarker) calculateRoute();
+            });
+            
+            // Initialize ride type change event
+            document.getElementById("ride-type").addEventListener("change", updateFare);
+        }
+        
+        function calculateRoute() {
+            const request = {
+                origin: pickupMarker.getPosition(),
+                destination: destinationMarker.getPosition(),
+                travelMode: google.maps.TravelMode.DRIVING,
+            };
+            
+            directionsService.route(request, function(result, status) {
+                if (status === google.maps.DirectionsStatus.OK) {
+                    directionsRenderer.setDirections(result);
+                    
+                    // Get distance and update fare
+                    const route = result.routes[0];
+                    const distance = route.legs[0].distance.value / 1000; // Convert to km
+                    
+                    document.getElementById("distance-input").value = distance.toFixed(2);
+                    updateFare();
+                }
+            });
+        }
+        
+        function updateFare() {
+            const distance = parseFloat(document.getElementById("distance-input").value) || 0;
+            const rideType = document.getElementById("ride-type").value;
+            
+            let baseFare = 2.5;
+            let perKmRate = 1.5;
+            
+            // Adjust rates based on ride type
+            if (rideType === "premium") {
+                baseFare = 5;
+                perKmRate = 2;
+            } else if (rideType === "xl") {
+                baseFare = 10;
+                perKmRate = 3;
+            }
+            
+            const totalFare = baseFare + (distance * perKmRate);
+            
+            // Update the displayed fare
+            document.getElementById("fare-amount").textContent = "$" + totalFare.toFixed(2);
+            document.getElementById("fare-input").value = totalFare.toFixed(2);
+        }
+        
+        // Initialize the map when the page loads
+        document.addEventListener("DOMContentLoaded", function() {
+            if (document.getElementById("map")) {
+                if (typeof google !== "undefined") {
+                    initMap();
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

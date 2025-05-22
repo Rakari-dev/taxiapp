@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - TaxiApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>TaxiApp</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}" class="active">Register</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="form-container">
+                <h2>Create an Account</h2>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages">
+                            {% for category, message in messages %}
+                                <div class="flash-message {{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Account Type</label>
+                        <div class="user-type-options">
+                            <div class="user-type-option selected">
+                                <input type="radio" id="passenger" name="user_type" value="passenger" checked>
+                                <label for="passenger">Passenger</label>
+                            </div>
+                            <div class="user-type-option">
+                                <input type="radio" id="driver" name="user_type" value="driver">
+                                <label for="driver">Driver</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="driver-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="vehicle_model">Vehicle Model</label>
+                            <input type="text" id="vehicle_model" name="vehicle_model">
+                        </div>
+                        <div class="form-group">
+                            <label for="license_plate">License Plate</label>
+                            <input type="text" id="license_plate" name="license_plate">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Register</button>
+                    
+                    <div class="form-footer">
+                        <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 TaxiApp. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userTypeOptions = document.querySelectorAll('.user-type-option');
+            const driverFields = document.getElementById('driver-fields');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirm_password');
+            const form = document.querySelector('form');
+            
+            // Handle user type selection
+            userTypeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove selected class from all options
+                    userTypeOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    
+                    // Check the radio button
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    
+                    // Show/hide driver fields
+                    if (radio.value === 'driver') {
+                        driverFields.style.display = 'block';
+                    } else {
+                        driverFields.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Password confirmation validation
+            form.addEventListener('submit', function(e) {
+                if (password.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    alert('Passwords do not match');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

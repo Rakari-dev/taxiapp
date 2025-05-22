@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Confirmation - TaxiApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>TaxiApp</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('book_ride') }}">Book a Ride</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="confirmation-container">
+                <div class="confirmation-header">
+                    <div class="status-icon searching">
+                        <span class="material-icons">search</span>
+                    </div>
+                    <h2 class="status-heading">Searching for Drivers...</h2>
+                </div>
+                
+                <div class="ride-details-card">
+                    <h3>Ride Details</h3>
+                    <div class="ride-details-content">
+                        <div class="ride-route">
+                            <div class="pickup">
+                                <span class="material-icons">my_location</span>
+                                <div class="location-text">
+                                    <p class="label">Pickup</p>
+                                    <p class="address">{{ ride.pickup_location }}</p>
+                                </div>
+                            </div>
+                            <div class="route-line"></div>
+                            <div class="destination">
+                                <span class="material-icons">place</span>
+                                <div class="location-text">
+                                    <p class="label">Destination</p>
+                                    <p class="address">{{ ride.destination }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="ride-info">
+                            <div class="info-item">
+                                <p class="label">Ride Type</p>
+                                <p class="value">{{ ride.ride_type|capitalize }}</p>
+                            </div>
+                            <div class="info-item">
+                                <p class="label">Fare</p>
+                                <p class="value">${{ ride.fare }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="driver-info" style="display: none;">
+                    <div class="driver-card">
+                        <div class="driver-avatar">
+                            <span class="material-icons">person</span>
+                        </div>
+                        <div class="driver-details">
+                            <h3 id="driver-name">John Driver</h3>
+                            <p id="driver-rating">⭐ 4.8 (203 rides)</p>
+                            <p id="driver-car">Toyota Camry • ABC 123</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{{ url_for('dashboard') }}" class="btn-secondary">Back to Dashboard</a>
+                    <button class="btn-danger cancel-ride">Cancel Ride</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 TaxiApp. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusIcon = document.querySelector('.status-icon');
+            const statusHeading = document.querySelector('.status-heading');
+            
+            // Simulate finding a driver after 5 seconds
+            setTimeout(function() {
+                statusIcon.classList.remove('searching');
+                statusIcon.classList.add('confirmed');
+                statusHeading.textContent = 'Driver Found!';
+                
+                // Show driver info
+                document.querySelector('.driver-info').style.display = 'block';
+                
+                // Update driver details (would come from the backend in a real app)
+                document.getElementById('driver-name').textContent = 'John Driver';
+                document.getElementById('driver-rating').textContent = '⭐ 4.8 (203 rides)';
+                document.getElementById('driver-car').textContent = 'Toyota Camry • ABC 123';
+            }, 5000);
+        });
+    </script>
+</body>
+</html> 
